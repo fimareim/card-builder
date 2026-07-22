@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✨ ArtHeart – магия открыток и мотиваций</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+    <!-- Анимированный фон с частицами -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Шапка -->
+    <header class="header">
+        <div class="logo">
+            <i class="fa-solid fa-paintbrush"></i>
+            <span>ArtHeart</span>
+        </div>
+        <nav class="nav">
+            <a href="#hero" class="nav-link active">Главная</a>
+            <a href="#create" class="nav-link">Создать</a>
+            <a href="#gallery" class="nav-link">Вдохновение</a>
+        </nav>
+    </header>
+
+    <!-- Hero секция -->
+    <section class="hero" id="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <span class="gradient-text">Создай открытку</span><br>с душой и искусственным интеллектом
+            </h1>
+            <p class="hero-subtitle">Бесплатные нейросети генерируют уникальные поздравления, мотивационные картинки и романтические послания за секунды. Скачай на телефон или поделись с близкими.</p>
+            <a href="#create" class="btn-primary pulse">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Начать творить
+            </a>
+        </div>
+        <div class="hero-visual">
+            <div class="floating-card" id="floatingCard">
+                <img src="https://picsum.photos/300/300?random=1" alt="Пример открытки">
+                <div class="floating-text">С днём рождения!</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Секция создания -->
+    <section class="create-section" id="create">
+        <div class="section-header">
+            <h2><i class="fa-solid fa-stars"></i> Волшебный конструктор</h2>
+            <p>Выбери тему, стиль, получателя — и нажми на волшебную кнопку</p>
+        </div>
+
+        <div class="creator-grid">
+            <div class="creator-form">
+                <div class="form-group floating-label">
+                    <select id="type" required>
+                        <option value="birthday">🎂 День рождения</option>
+                        <option value="motivation">💪 Мотивация дня</option>
+                        <option value="love">❤️ Любовь и романтика</option>
+                        <option value="thanks">🙏 Благодарность</option>
+                        <option value="custom">✏️ Свой вариант</option>
+                    </select>
+                    <label>Тип открытки</label>
+                </div>
+
+                <div class="form-group floating-label" id="customGroup" style="display:none;">
+                    <input type="text" id="customText" placeholder=" ">
+                    <label>Ваш вариант повода</label>
+                </div>
+
+                <div class="form-group floating-label">
+                    <select id="style">
+                        <option value="watercolor painting">🎨 Нежная акварель</option>
+                        <option value="minimalist vector art">📐 Лаконичный минимализм</option>
+                        <option value="cute cartoon">🧸 Милый мультфильм</option>
+                        <option value="realistic photo">📸 Фотореализм</option>
+                        <option value="cyberpunk digital art">🤖 Киберпанк</option>
+                        <option value="vintage oil painting">🖼️ Винтажная живопись</option>
+                        <option value="pastel dream">🌸 Пастельный сон</option>
+                    </select>
+                    <label>Художественный стиль</label>
+                </div>
+
+                <div class="form-group floating-label">
+                    <input type="text" id="recipient" placeholder=" " value="Мой дорогой человек">
+                    <label>Для кого (имя)</label>
+                </div>
+
+                <button id="generateBtn" class="btn-generate">
+                    <i class="fa-solid fa-sparkles"></i> Сгенерировать открытку
+                    <span class="btn-shine"></span>
+                </button>
+
+                <div id="loader" class="loader hidden">
+                    <div class="loader-spinner"></div>
+                    <p>Создаём магию...</p>
+                </div>
+            </div>
+
+            <div class="preview-area">
+                <div id="result" class="card-preview hidden">
+                    <div class="card" id="cardToDownload">
+                        <img id="cardImage" src="" alt="Ваша открытка">
+                        <div class="card-overlay">
+                            <p id="cardText"></p>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button id="downloadBtn" class="btn-download">
+                            <i class="fa-solid fa-download"></i> Скачать PNG
+                        </button>
+                        <button id="newCardBtn" class="btn-new">
+                            <i class="fa-solid fa-rotate"></i> Новая открытка
+                        </button>
+                    </div>
+                </div>
+                <div class="empty-state" id="emptyState">
+                    <i class="fa-solid fa-image fa-3x"></i>
+                    <p>Здесь появится твоя уникальная открытка</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Мини-галерея примеров -->
+    <section class="gallery" id="gallery">
+        <div class="section-header">
+            <h2><i class="fa-solid fa-palette"></i> Вдохновляющие идеи</h2>
+            <p>Вот что можно создать за пару кликов</p>
+        </div>
+        <div class="examples-grid">
+            <div class="example-item">
+                <img src="https://picsum.photos/400/400?random=2" alt="Пример 1">
+                <div class="example-caption">Мотивация на успех</div>
+            </div>
+            <div class="example-item">
+                <img src="https://picsum.photos/400/400?random=3" alt="Пример 2">
+                <div class="example-caption">Нежное признание</div>
+            </div>
+            <div class="example-item">
+                <img src="https://picsum.photos/400/400?random=4" alt="Пример 3">
+                <div class="example-caption">Благодарность маме</div>
+            </div>
+            <div class="example-item">
+                <img src="https://picsum.photos/400/400?random=5" alt="Пример 4">
+                <div class="example-caption">День рождения коллеги</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Футер -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-col">
+                <h4>ArtHeart</h4>
+                <p>Творчество с искусственным интеллектом – бесплатно и без ограничений.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Возможности</h4>
+                <ul>
+                    <li>Поздравления</li>
+                    <li>Мотивация дня</li>
+                    <li>Романтика</li>
+                    <li>Благодарности</li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>ВСЕМ ДОБРА</h4>
+                <p>Создано с ❤️ </p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>©Vityagoldman. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
