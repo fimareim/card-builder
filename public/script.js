@@ -1,61 +1,92 @@
-const express = require('express');
-require('dotenv').config();
+// Частицы на фоне
+function createParticles() {
+    const container = document.getElementById('particles');
+    const numParticles = 50;
+    for (let i = 0; i < numParticles; i++) {
+        const dot = document.createElement('div');
+        dot.classList.add('particle-dot');
+        const size = Math.random() * 4 + 2;
+        dot.style.width = `${size}px`;
+        dot.style.height = `${size}px`;
+        dot.style.left = `${Math.random() * 100}%`;
+        dot.style.animationDuration = `${Math.random() * 10 + 10}s`;
+        dot.style.animationDelay = `${Math.random() * 5}s`;
+        container.appendChild(dot);
+    }
+}
+createParticles();
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+// Переключение видимости кастомного поля
+document.getElementById('type').addEventListener('change', function () {
+    document.getElementById('customGroup').style.display = this.value === 'custom' ? 'block' : 'none';
+});
 
-app.use(express.json());
-app.use(express.static('public'));
+// Генерация открытки
+document.getElementById('generateBtn').addEventListener('click', async () => {
+    const type = document.getElementById('type').value;
+    const style = document.getElementById('style').value;
+    const recipient = document.getElementById('recipient').value.trim() || 'Дорогой человек';
+    const customText = document.getElementById('customText').value.trim();
+    const occasion = type === 'custom' ? customText : {
+        birthday: 'День рождения',
+        motivation: 'Мотивация и успех',
+        love: 'Любовь и нежность',
+        thanks: 'Благодарность'
+    }[type];
 
-// Бесплатный ключ Gemini – хранится ТОЛЬКО на сервере
-const GEMINI_API_KEY = process.env.GEMINI_KEY;
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    if (type === 'custom' && !customText) {
+        alert('Пожалуйста, введите свой вариант повода');
+        return;
+    }
 
-// 1) Генерация текста через Gemini
-app.post('/api/generate-text', async (req, res) => {
-    const { occasion, mood, recipient } = req.body;
-    const prompt = `Напиши красивое, душевное поздравление или мотивационную фразу.
-    Контекст: событие – ${occasion}, настроение – ${mood}, получатель – ${recipient}.
-    Длина: 2-4 предложения. Только текст, без кавычек и лишних пояснений. Язык: русский.`;
+    document.getElementById('loader').classList.remove('hidden');
+    document.getElementById('result').classList.add('hidden');
+    document.getElementById('emptyState').classList.add('hidden');
 
     try {
-        const response = await fetch(GEMINI_URL, {
+        // Текст
+        const textRes = await fetch('/api/generate-text', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                safetySettings: [{ category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }]
-            })
+            body: JSON.stringify({ occasion, mood: style, recipient })
         });
-        const data = await response.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Ошибка генерации текста';
-        res.json({ text });
+        const { text } = await textRes.json();
+
+        // Картинка
+        const imageUrl = `/api/generate-image?description=${encodeURIComponent(occasion)}&style=${encodeURIComponent(style)}`;
+
+        document.getElementById('cardImage').src = imageUrl;
+        document.getElementById('cardText').textContent = text;
+        document.getElementById('loader').classList.add('hidden');
+        document.getElementById('result').classList.remove('hidden');
+
+        // Плавный скролл к результату
+        document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'center' });
+
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Ошибка генерации текста' });
+        alert('Ошибка генерации. Попробуйте ещё раз.');
+        document.getElementById('loader').classList.add('hidden');
     }
 });
 
-// 2) Генерация изображения через Pollinations.ai (проксирование)
-app.get('/api/generate-image', async (req, res) => {
-    const { description, style } = req.query;
-    const imagePrompt = encodeURIComponent(
-        `${description}, ${style}, beautiful composition, vibrant colors, digital art, high quality`
-    );
-    const imageUrl = `https://image.pollinations.ai/prompt/${imagePrompt}?width=1024&height=1024&nologo=true`;
-
-    try {
-        const response = await fetch(imageUrl);
-        const buffer = await response.arrayBuffer();
-        res.set('Content-Type', 'image/jpeg');
-        res.send(Buffer.from(buffer));
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Ошибка загрузки изображения' });
-    }
+// Скачивание
+document.getElementById('downloadBtn').addEventListener('click', function () {
+    const card = document.getElementById('cardToDownload');
+    html2canvas(card, { scale: 2, backgroundColor: null }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'artheart-otkrytka.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    });
 });
 
-app.listen(PORT, () => {
-    console.log(`🚀 Сервер открыток работает на порту ${PORT}`);
-});
+// Кнопка "Новая открытка"
+document.getElementById('newCardBtn').addEventListener('click', function () {
+    document.getElementById('result').classList.add('hidden');
+    document.getElementById('emptyState').classList.remove('hidden');
+    // Сброс изображения, чтобы не грузить память
+    document.getElementById('cardImage').src = '';
+});});
+
+
 
