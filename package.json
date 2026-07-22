@@ -1,0 +1,1 @@
+{"name":"greeting-card-builder","version":"1.0.0","description":"Генератор открыток и мотиваций (бесплатные ИИ)","main":"server.js","scripts":{"start":"node server.js"},"engines":{"node":">=18.0.0"},"dependencies":{"dotenv":"^16.3.1","express":"^4.18.2"}}
