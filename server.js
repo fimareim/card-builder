@@ -29,7 +29,7 @@ app.post('/api/generate-text', async (req, res) => {
     console.log('🟡 Запрос текста:', prompt.substring(0, 80));
 
     try {
-        const textUrl = `https://text.pollinations.ai/${encodeURIComponent(prompt)}`;
+        const textUrl = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?seed=${Math.random()}`;
         const response = await fetchWithTimeout(textUrl, {}, 20000);
         if (!response.ok) throw new Error(`Ошибка HTTP: ${response.status}`);
         const text = await response.text();
