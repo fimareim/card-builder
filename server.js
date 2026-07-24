@@ -1,4 +1,3 @@
-
 const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,30 +18,42 @@ async function fetchWithTimeout(url, options = {}, timeout = 15000) {
     }
 }
 
-// 1. Генерация текста
+// 1. Генерация текста – теперь со случайным seed в промпте
 app.post('/api/generate-text', async (req, res) => {
     const { occasion, recipient } = req.body;
-    const prompt = `Напиши красивое, душевное поздравление или мотивационную фразу.
+
+    // Генерируем случайный идентификатор запроса, чтобы нейросеть выдавала разные фразы
+    const requestId = Math.random().toString(36).substring(2, 10);
+    const prompt = `[id:${requestId}] Напиши красивое, душевное поздравление или мотивационную фразу.
     Контекст: событие – ${occasion}, получатель – ${recipient}.
     Длина: 2-4 предложения. Только текст, без кавычек и лишних пояснений. Язык: русский.`;
 
-    console.log('🟡 Запрос текста:', prompt.substring(0, 80));
+    console.log('🟡 Запрос текста с ID:', requestId, '| Промпт:', prompt.substring(0, 100));
 
     try {
-        const textUrl = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?seed=${Math.random()}`;
+        // Добавляем ?seed к URL для обхода кэша на стороне Pollinations
+        const textUrl = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?seed=${Date.now()}`;
+        console.log('🔗 URL текста:', textUrl);
         const response = await fetchWithTimeout(textUrl, {}, 20000);
         if (!response.ok) throw new Error(`Ошибка HTTP: ${response.status}`);
         const text = await response.text();
-        console.log('✅ Текст:', text.substring(0, 60));
+        console.log('✅ Получен текст:', text);
         res.json({ text: text.trim() });
     } catch (error) {
-        console.error('❌ Ошибка текста:', error.message);
-        const fallbackText = `Дорогой ${recipient}, пусть этот день принесёт тебе радость, вдохновение и море улыбок. Ты заслуживаешь самого лучшего!`;
+        console.error('❌ Ошибка генерации текста:', error.message);
+        // Разнообразим fallback в зависимости от повода
+        const fallbacks = {
+            'День рождения': `🎂 Дорогой ${recipient}, с днём рождения! Желаю счастья, здоровья и исполнения самых заветных желаний. Пусть каждый день будет наполнен радостью!`,
+            'Мотивация и успех': `💪 ${recipient}, помни: ты способен на великие дела! Сегодня – отличный день, чтобы сделать шаг к своей мечте. Всё получится!`,
+            'Любовь и нежность': `❤️ ${recipient}, ты – самое прекрасное, что есть в моей жизни. Спасибо за твою любовь, нежность и тепло. Ты – моё вдохновение!`,
+            'Благодарность': `🙏 ${recipient}, от всего сердца благодарю тебя за поддержку и доброту. Ты делаешь этот мир лучше, и я это очень ценю.`,
+        };
+        const fallbackText = fallbacks[occasion] || `Дорогой ${recipient}, пусть этот день принесёт тебе радость, вдохновение и море улыбок. Ты заслуживаешь самого лучшего!`;
         res.json({ text: fallbackText, fallback: true });
     }
 });
 
-// 2. Генерация изображения
+// 2. Генерация изображения (без изменений)
 app.get('/api/generate-image', async (req, res) => {
     const { description, style } = req.query;
     const imagePrompt = encodeURIComponent(
@@ -73,3 +84,4 @@ app.get('/api/generate-image', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`🚀 Сервер открыток запущен на порту ${PORT}`);
 });
+
