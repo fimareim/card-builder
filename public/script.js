@@ -58,7 +58,7 @@ generateBtn.addEventListener('click', async () => {
         const textPromise = fetch('/api/generate-text', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ occasion, mood: style, recipient })
+            body: JSON.stringify({ occasion, recipient })   // <-- Убрали mood, чтобы текст менялся
         }).then(res => {
             if (!res.ok) throw new Error('Ошибка сервера');
             return res.json();
@@ -69,6 +69,8 @@ generateBtn.addEventListener('click', async () => {
             const img = new Image();
             img.onload = () => resolve(url);
             img.onerror = () => reject(new Error('Не удалось загрузить картинку'));
+            // Таймаут для картинки
+            setTimeout(() => reject(new Error('Таймаут загрузки картинки')), 30000);
             img.src = url;
         });
 
