@@ -22,7 +22,14 @@ document.getElementById('type').addEventListener('change', function () {
 });
 
 // Генерация открытки
-document.getElementById('generateBtn').addEventListener('click', async () => {
+const generateBtn = document.getElementById('generateBtn');
+const loader = document.getElementById('loader');
+const resultDiv = document.getElementById('result');
+const emptyState = document.getElementById('emptyState');
+const cardImage = document.getElementById('cardImage');
+const cardText = document.getElementById('cardText');
+
+generateBtn.addEventListener('click', async () => {
     const type = document.getElementById('type').value;
     const style = document.getElementById('style').value;
     const recipient = document.getElementById('recipient').value.trim() || 'Дорогой человек';
@@ -39,33 +46,52 @@ document.getElementById('generateBtn').addEventListener('click', async () => {
         return;
     }
 
-    document.getElementById('loader').classList.remove('hidden');
-    document.getElementById('result').classList.add('hidden');
-    document.getElementById('emptyState').classList.add('hidden');
+    // Блокируем кнопку и показываем загрузку
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Генерация...';
+    loader.classList.remove('hidden');
+    resultDiv.classList.add('hidden');
+    emptyState.classList.add('hidden');
 
     try {
-        // Текст
-        const textRes = await fetch('/api/generate-text', {
+        // Параллельный запрос текста и картинки
+        const textPromise = fetch('/api/generate-text', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ occasion, mood: style, recipient })
+        }).then(res => {
+            if (!res.ok) throw new Error('Ошибка сервера');
+            return res.json();
         });
-        const { text } = await textRes.json();
 
-        // Картинка
-        const imageUrl = `/api/generate-image?description=${encodeURIComponent(occasion)}&style=${encodeURIComponent(style)}`;
+        const imagePromise = new Promise((resolve, reject) => {
+            const url = `/api/generate-image?description=${encodeURIComponent(occasion)}&style=${encodeURIComponent(style)}`;
+            const img = new Image();
+            img.onload = () => resolve(url);
+            img.onerror = () => reject(new Error('Не удалось загрузить картинку'));
+            img.src = url;
+        });
 
-        document.getElementById('cardImage').src = imageUrl;
-        document.getElementById('cardText').textContent = text;
-        document.getElementById('loader').classList.add('hidden');
-        document.getElementById('result').classList.remove('hidden');
+        const [textData, imageUrl] = await Promise.all([textPromise, imagePromise]);
+
+        cardImage.src = imageUrl;
+        cardText.textContent = textData.text;
+
+        loader.classList.add('hidden');
+        resultDiv.classList.remove('hidden');
 
         // Плавный скролл к результату
-        document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        resultDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
     } catch (error) {
-        alert('Ошибка генерации. Попробуйте ещё раз.');
-        document.getElementById('loader').classList.add('hidden');
+        console.error('Ошибка генерации:', error);
+        alert('Что-то пошло не так. Попробуйте снова.');
+        loader.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+    } finally {
+        // Возвращаем кнопку в исходное состояние
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '<i class="fa-solid fa-sparkles"></i> Сгенерировать открытку';
     }
 });
 
@@ -82,11 +108,8 @@ document.getElementById('downloadBtn').addEventListener('click', function () {
 
 // Кнопка "Новая открытка"
 document.getElementById('newCardBtn').addEventListener('click', function () {
-    document.getElementById('result').classList.add('hidden');
-    document.getElementById('emptyState').classList.remove('hidden');
-    // Сброс изображения, чтобы не грузить память
-    document.getElementById('cardImage').src = '';
-});});
-
-
+    resultDiv.classList.add('hidden');
+    emptyState.classList.remove('hidden');
+    cardImage.src = '';
+});
 
